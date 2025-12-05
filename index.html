@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyaur Utang Waktu Kerja</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .color-0 { background-color: #f3f4f6; }
+        .color-1-50 { background-color: #fef3c7; }
+        .color-51-70 { background-color: #fb923c; }
+        .color-71-80 { background-color: #4ade80; }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .slider-green::-webkit-slider-thumb {
+            background: #10b981;
+        }
+        
+        .slider-orange::-webkit-slider-thumb {
+            background: #f59e0b;
+        }
+        
+        .slider-yellow::-webkit-slider-thumb {
+            background: #fbbf24;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen p-4 md:p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-clock text-blue-600 mr-3"></i>
+                Nyaur Utang Waktu Kerja
+            </h1>
+            <p class="text-gray-600">Track dan kelola pembayaran utang waktu kerja Anda</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Panel Kontrol -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 pb-3 border-b">
+                    <i class="fas fa-calculator text-blue-600 mr-2"></i>
+                    Kalkulator Utang
+                </h2>
+                
+                <!-- Input Total Hutang -->
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2 font-medium">
+                        <i class="fas fa-file-invoice-dollar text-green-600 mr-2"></i>
+                        Total Hutang (Jam)
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="number" 
+                            id="totalHutang" 
+                            min="0" 
+                            class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Masukkan total jam hutang"
+                            value="240"
+                        >
+                        <i class="fas fa-clock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <!-- Statistik -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 mb-6 border border-blue-100">
+                    <h3 class="font-bold text-gray-800 mb-4">
+                        <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                        Statistik Pembayaran
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-gray-700">Sudah Dibayar:</span>
+                                <span id="sudahDibayar" class="font-bold text-green-600">0 jam</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="progressBar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-3 rounded-lg border text-center">
+                                <div class="text-2xl font-bold text-green-600" id="countHijau">0</div>
+                                <div class="text-sm text-gray-600">Lunas (71-80)</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border text-center">
+                                <div class="text-2xl font-bold text-orange-600" id="countOrange">0</div>
+                                <div class="text-sm text-gray-600">Sedang (51-70)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Persentase -->
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+                    <h3 class="font-bold text-gray-800 mb-3">
+                        <i class="fas fa-percentage text-green-600 mr-2"></i>
+                        Persentase Pembayaran
+                    </h3>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-green-700 mb-2" id="persentase">0%</div>
+                        <div class="text-gray-600">Dari total hutang telah dibayar</div>
+                    </div>
+                </div>
+                
+                <!-- Tombol Aksi -->
+                <div class="mt-6 space-y-3">
+                    <button 
+                        id="btnReset" 
+                        class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center"
+                    >
+                        <i class="fas fa-redo mr-2"></i> Reset Semua Data
+                    </button>
+                    <button 
+                        id="btnSimpan" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center"
+                    >
+                        <i class="fas fa-save mr-2"></i> Simpan ke Database
+                    </button>
+                </div>
+                
+                <!-- Info Legend -->
+                <div class="mt-6 pt-5 border-t border-gray-200">
+                    <h4 class="font-medium text-gray-700 mb-3">
+                        <i class="fas fa-palette text-purple-600 mr-2"></i>
+                        Legend Warna:
+                    </h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded mr-3 bg-gray-100 border"></div>
+                            <span class="text-gray-700">0 = Belum dibayar</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded mr-3 bg-yellow-200 border"></div>
+                            <span class="text-gray-700">1-50 = Pembayaran awal</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded mr-3 bg-orange-400 border"></div>
+                            <span class="text-gray-700">51-70 = Pembayaran sedang</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded mr-3 bg-green-400 border"></div>
+                            <span class="text-gray-700">71-80 = Lunas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grid Angka -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">
+                            <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
+                            Daftar Pembayaran Per Hari
+                        </h2>
+                        <div class="text-gray-600">
+                            Total: <span class="font-bold text-blue-600">30 hari</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-10 gap-3" id="gridContainer">
+                        <!-- Grid akan di-generate oleh JavaScript -->
+                    </div>
+                    
+                    <!-- Info Status -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <div class="flex flex-wrap justify-center gap-4">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full bg-gray-400 mr-2"></div>
+                                <span class="text-gray-700">Belum diisi: <span id="countKosong">30</span></span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                                <span class="text-gray-700">Lunas: <span id="countHijau2">0</span></span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full bg-yellow-400 mr-2"></div>
+                                <span class="text-gray-700">Progress: <span id="countTotal">0</span> hari</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-gray-600 text-sm">
+            <p>Data disimpan secara lokal menggunakan IndexedDB. Data tetap tersimpan meski browser ditutup.</p>
+            <p class="mt-2">© 2023 Nyaur Utang Waktu Kerja - Tracking Application</p>
+        </footer>
+    </div>
+    
+    <!-- Modal Popup -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-edit text-blue-600 mr-2"></i>
+                        Edit Pembayaran Hari <span id="modalDay">1</span>
+                    </h3>
+                    <button id="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-8">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-700 font-medium">Tingkat Pembayaran:</span>
+                        <span id="sliderValue" class="font-bold text-blue-600 text-xl">0</span>
+                    </div>
+                    <input 
+                        type="range" 
+                        id="paymentSlider" 
+                        min="0" 
+                        max="80" 
+                        value="0" 
+                        class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    >
+                    
+                    <div class="flex justify-between text-xs text-gray-500 mt-2">
+                        <span>Belum Bayar</span>
+                        <span>Sedang</span>
+                        <span>Lunas</span>
+                    </div>
+                </div>
+                
+                <!-- Indikator Warna -->
+                <div class="mb-6">
+                    <div class="font-medium text-gray-700 mb-3">Indikator:</div>
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="text-center p-2 bg-gray-100 rounded" id="indicator0">
+                            <div class="font-bold text-gray-700">0</div>
+                            <div class="text-xs">Kosong</div>
+                        </div>
+                        <div class="text-center p-2 bg-yellow-100 rounded border border-yellow-200" id="indicator1">
+                            <div class="font-bold text-gray-700">1-50</div>
+                            <div class="text-xs">Awal</div>
+                        </div>
+                        <div class="text-center p-2 bg-orange-100 rounded border border-orange-200" id="indicator2">
+                            <div class="font-bold text-gray-700">51-70</div>
+                            <div class="text-xs">Sedang</div>
+                        </div>
+                        <div class="text-center p-2 bg-green-100 rounded border border-green-200" id="indicator3">
+                            <div class="font-bold text-gray-700">71-80</div>
+                            <div class="text-xs">Lunas</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button 
+                        id="btnCancel" 
+                        class="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition duration-200"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        id="btnSaveModal" 
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition duration-200 flex items-center"
+                    >
+                        <i class="fas fa-check mr-2"></i> Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg hidden transform transition-transform duration-300 translate-y-full z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle text-xl mr-3"></i>
+            <div>
+                <div class="font-bold">Berhasil disimpan!</div>
+                <div class="text-sm opacity-90">Data telah disimpan ke IndexedDB.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inisialisasi variabel
+        let daysData = Array(30).fill(0);
+        let currentDay = 0;
+        let totalHutang = 240; // Default value
+        let db;
+        
+        // Warna berdasarkan nilai
+        function getColorClass(value) {
+            if (value === 0) return 'color-0';
+            if (value >= 1 && value <= 50) return 'color-1-50';
+            if (value >= 51 && value <= 70) return 'color-51-70';
+            if (value >= 71 && value <= 80) return 'color-71-80';
+            return 'color-0';
+        }
+        
+        // Format angka
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        
+        // Update statistik
+        function updateStatistics() {
+            const sudahDibayar = daysData.reduce((sum, value) => sum + value, 0);
+            const totalHutangInput = parseInt(document.getElementById('totalHutang').value) || totalHutang;
+            
+            // Hitung persentase
+            const persentase = totalHutangInput > 0 ? Math.min(100, (sudahDibayar / totalHutangInput) * 100) : 0;
+            
+            // Hitung jumlah per kategori
+            const countHijau = daysData.filter(v => v >= 71 && v <= 80).length;
+            const countOrange = daysData.filter(v => v >= 51 && v <= 70).length;
+            const countYellow = daysData.filter(v => v >= 1 && v <= 50).length;
+            const countKosong = daysData.filter(v => v === 0).length;
+            
+            // Update UI
+            document.getElementById('sudahDibayar').textContent = `${formatNumber(sudahDibayar)} jam`;
+            document.getElementById('persentase').textContent = `${persentase.toFixed(1)}%`;
+            document.getElementById('progressBar').style.width = `${persentase}%`;
+            
+            document.getElementById('countHijau').textContent = countHijau;
+            document.getElementById('countHijau2').textContent = countHijau;
+            document.getElementById('countOrange').textContent = countOrange;
+            document.getElementById('countKosong').textContent = countKosong;
+            document.getElementById('countTotal').textContent = 30 - countKosong;
+            
+            // Update progress bar color based on percentage
+            const progressBar = document.getElementById('progressBar');
+            if (persentase < 30) {
+                progressBar.classList.remove('bg-green-600', 'bg-yellow-500');
+                progressBar.classList.add('bg-red-500');
+            } else if (persentase < 70) {
+                progressBar.classList.remove('bg-red-500', 'bg-green-600');
+                progressBar.classList.add('bg-yellow-500');
+            } else {
+                progressBar.classList.remove('bg-red-500', 'bg-yellow-500');
+                progressBar.classList.add('bg-green-600');
+            }
+        }
+        
+        // Render grid
+        function renderGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            
+            daysData.forEach((value, index) => {
+                const day = index + 1;
+                const colorClass = getColorClass(value);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = `aspect-square rounded-xl border-2 border-gray-200 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-md ${colorClass}`;
+                dayElement.innerHTML = `
+                    <div class="text-lg font-bold text-gray-800">${day}</div>
+                    <div class="text-sm font-medium mt-1 ${value === 0 ? 'text-gray-500' : 'text-gray-800'}">
+                        ${value > 0 ? value + ' pt' : '-'}
+                    </div>
+                `;
+                
+                dayElement.addEventListener('click', () => openModal(day, value));
+                container.appendChild(dayElement);
+            });
+            
+            updateStatistics();
+        }
+        
+        // Buka modal
+        function openModal(day, value) {
+            currentDay = day - 1;
+            document.getElementById('modalDay').textContent = day;
+            document.getElementById('paymentSlider').value = value;
+            document.getElementById('sliderValue').textContent = value;
+            
+            // Update indikator aktif
+            updateSliderIndicator(value);
+            
+            document.getElementById('modal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('modal').classList.add('flex');
+                document.querySelector('#modal > div').classList.remove('scale-95');
+                document.querySelector('#modal > div').classList.add('scale-100');
+            }, 10);
+        }
+        
+        // Tutup modal
+        function closeModal() {
+            document.querySelector('#modal > div').classList.remove('scale-100');
+            document.querySelector('#modal > div').classList.add('scale-95');
+            
+            setTimeout(() => {
+                document.getElementById('modal').classList.remove('flex');
+                document.getElementById('modal').classList.add('hidden');
+            }, 300);
+        }
+        
+        // Update indikator slider
+        function updateSliderIndicator(value) {
+            // Reset semua indikator
+            document.querySelectorAll('[id^="indicator"]').forEach(el => {
+                el.classList.remove('ring-2', 'ring-offset-1');
+                el.classList.remove('ring-blue-500');
+            });
+            
+            // Set indikator aktif
+            if (value === 0) {
+                document.getElementById('indicator0').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
+            } else if (value >= 1 && value <= 50) {
+                document.getElementById('indicator1').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
+            } else if (value >= 51 && value <= 70) {
+                document.getElementById('indicator2').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
+            } else if (value >= 71 && value <= 80) {
+                document.getElementById('indicator3').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
+            }
+            
+            // Update warna slider berdasarkan nilai
+            const slider = document.getElementById('paymentSlider');
+            slider.classList.remove('slider-green', 'slider-orange', 'slider-yellow');
+            
+            if (value >= 71) {
+                slider.classList.add('slider-green');
+            } else if (value >= 51) {
+                slider.classList.add('slider-orange');
+            } else if (value >= 1) {
+                slider.classList.add('slider-yellow');
+            }
+        }
+        
+        // Simpan perubahan
+        function saveChanges() {
+            const value = parseInt(document.getElementById('paymentSlider').value);
+            daysData[currentDay] = value;
+            
+            renderGrid();
+            saveToIndexedDB();
+            closeModal();
+            
+            // Tampilkan notifikasi
+            showToast('Data hari ' + (currentDay + 1) + ' disimpan dengan nilai ' + value);
+        }
+        
+        // Tampilkan toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden', 'translate-y-full');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-full');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+        
+        // IndexedDB Functions
+        function initIndexedDB() {
+            const request = indexedDB.open('UtangWaktuKerjaDB', 1);
+            
+            request.onerror = function(event) {
+                console.log('Error membuka database:', event.target.error);
+            };
+            
+            request.onupgradeneeded = function(event) {
+                db = event.target.result;
+                const objectStore = db.createObjectStore('data', { keyPath: 'id' });
+                objectStore.createIndex('days', 'days', { unique: false });
+                objectStore.createIndex('total', 'total', { unique: false });
+            };
+            
+            request.onsuccess = function(event) {
+                db = event.target.result;
+                loadFromIndexedDB();
+            };
+        }
+        
+        function saveToIndexedDB() {
+            if (!db) return;
+            
+            const transaction = db.transaction(['data'], 'readwrite');
+            const objectStore = transaction.objectStore('data');
+            
+            const data = {
+                id: 'utangData',
+                days: daysData,
+                total: parseInt(document.getElementById('totalHutang').value) || totalHutang
+            };
+            
+            const request = objectStore.put(data);
+            
+            request.onerror = function(event) {
+                console.log('Error menyimpan data:', event.target.error);
+            };
+        }
+        
+        function loadFromIndexedDB() {
+            if (!db) return;
+            
+            const transaction = db.transaction(['data'], 'readonly');
+            const objectStore = transaction.objectStore('data');
+            const request = objectStore.get('utangData');
+            
+            request.onsuccess = function(event) {
+                const data = event.target.result;
+                if (data) {
+                    daysData = data.days;
+                    totalHutang = data.total;
+                    document.getElementById('totalHutang').value = totalHutang;
+                    renderGrid();
+                }
+            };
+            
+            request.onerror = function(event) {
+                console.log('Error memuat data:', event.target.error);
+            };
+        }
+        
+        // Reset semua data
+        function resetData() {
+            if (confirm('Apakah Anda yakin ingin mereset semua data? Tindakan ini tidak dapat dibatalkan.')) {
+                daysData = Array(30).fill(0);
+                document.getElementById('totalHutang').value = 240;
+                totalHutang = 240;
+                
+                renderGrid();
+                saveToIndexedDB();
+                
+                showToast('Semua data telah direset');
+            }
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Render grid awal
+            renderGrid();
+            
+            // Inisialisasi IndexedDB
+            initIndexedDB();
+            
+            // Slider event
+            document.getElementById('paymentSlider').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('sliderValue').textContent = value;
+                updateSliderIndicator(parseInt(value));
+            });
+            
+            // Modal buttons
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('btnCancel').addEventListener('click', closeModal);
+            document.getElementById('btnSaveModal').addEventListener('click', saveChanges);
+            
+            // Tombol aksi
+            document.getElementById('btnReset').addEventListener('click', resetData);
+            document.getElementById('btnSimpan').addEventListener('click', function() {
+                saveToIndexedDB();
+                showToast('Semua data berhasil disimpan ke database');
+            });
+            
+            // Input total hutang
+            document.getElementById('totalHutang').addEventListener('change', function() {
+                totalHutang = parseInt(this.value) || 240;
+                updateStatistics();
+                saveToIndexedDB();
+            });
+            
+            // Tutup modal dengan ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !document.getElementById('modal').classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+            
+            // Tutup modal dengan klik di luar
+            document.getElementById('modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+            
+            // Tambahkan animasi pada grid item saat pertama kali dimuat
+            setTimeout(() => {
+                const gridItems = document.querySelectorAll('#gridContainer > div');
+                gridItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.add('animate-pulse-slow');
+                        setTimeout(() => {
+                            item.classList.remove('animate-pulse-slow');
+                        }, 1000);
+                    }, index * 30);
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>
