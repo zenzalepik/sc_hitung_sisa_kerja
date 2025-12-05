@@ -88,8 +88,9 @@
 
         <!-- Modal Import Data -->
         <div id="importModal"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95">
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-16 pb-4 px-4 z-50 overflow-y-auto">
+            <div
+                class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95 my-8">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold text-gray-800">
@@ -742,9 +743,17 @@
             }
         }
 
-        // Render grid
+        // Render grid - FUNGSI INI YANG DIPERBAIKI
         function renderGrid() {
             const container = document.getElementById('gridContainer');
+            if (!container) {
+                console.error('Grid container tidak ditemukan!');
+                return;
+            }
+
+            console.log('Rendering grid dengan', daysData.length, 'hari');
+            console.log('Data:', daysData);
+
             container.innerHTML = '';
 
             daysData.forEach((jam, index) => {
@@ -981,7 +990,7 @@
                 document.getElementById('jamPerHari').textContent = jamPerHari;
 
                 // Render ulang dan simpan
-                updateHitungHari();
+                renderGrid(); // PASTIKAN INI DIPANGGIL
                 saveToIndexedDB();
 
                 // Tutup modal
@@ -1000,7 +1009,7 @@
             }
         }
 
-        // IndexedDB Functions
+        // IndexedDB Functions - INI YANG DIPERBAIKI
         function initIndexedDB() {
             const request = indexedDB.open('UtangWaktuKerjaPWA', 3);
 
@@ -1019,56 +1028,87 @@
             };
 
             request.onsuccess = function (event) {
+                console.log('Database berhasil dibuka');
                 db = event.target.result;
                 loadFromIndexedDB();
             };
         }
 
         function saveToIndexedDB() {
-            if (!db) return;
+            if (!db) {
+                console.warn('Database belum siap, menunda penyimpanan');
+                return;
+            }
 
-            const transaction = db.transaction(['data'], 'readwrite');
-            const objectStore = transaction.objectStore('data');
+            try {
+                const transaction = db.transaction(['data'], 'readwrite');
+                const objectStore = transaction.objectStore('data');
 
-            const data = {
-                id: 'utangData',
-                days: daysData,
-                total: totalHutang,
-                jamPerHari: jamPerHari,
-                lastUpdated: new Date().toISOString()
-            };
+                const data = {
+                    id: 'utangData',
+                    days: daysData,
+                    total: totalHutang,
+                    jamPerHari: jamPerHari,
+                    lastUpdated: new Date().toISOString()
+                };
 
-            const request = objectStore.put(data);
+                const request = objectStore.put(data);
 
-            request.onerror = function (event) {
-                console.log('Error menyimpan data:', event.target.error);
-            };
+                request.onerror = function (event) {
+                    console.log('Error menyimpan data:', event.target.error);
+                };
+
+                request.onsuccess = function () {
+                    console.log('Data berhasil disimpan ke IndexedDB');
+                };
+            } catch (error) {
+                console.error('Error saat menyimpan ke IndexedDB:', error);
+            }
         }
 
+        // LOAD DATA DARI INDEXEDDB - INI YANG DIPERBAIKI
         function loadFromIndexedDB() {
-            if (!db) return;
+            if (!db) {
+                console.warn('Database belum siap');
+                return;
+            }
 
-            const transaction = db.transaction(['data'], 'readonly');
-            const objectStore = transaction.objectStore('data');
-            const request = objectStore.get('utangData');
+            try {
+                const transaction = db.transaction(['data'], 'readonly');
+                const objectStore = transaction.objectStore('data');
+                const request = objectStore.get('utangData');
 
-            request.onsuccess = function (event) {
-                const data = event.target.result;
-                if (data) {
-                    daysData = data.days || Array(30).fill(0);
-                    totalHutang = data.total || 240;
-                    jamPerHari = data.jamPerHari || 8;
+                request.onsuccess = function (event) {
+                    const data = event.target.result;
+                    console.log('Data loaded from IndexedDB:', data);
 
-                    document.getElementById('totalHutang').value = totalHutang;
-                    document.getElementById('jamPerHari').textContent = jamPerHari;
+                    if (data) {
+                        daysData = data.days || Array(30).fill(0);
+                        totalHutang = data.total || 240;
+                        jamPerHari = data.jamPerHari || 8;
 
-                    updateHitungHari();
-                }
-            };
+                        document.getElementById('totalHutang').value = totalHutang;
+                        document.getElementById('jamPerHari').textContent = jamPerHari;
 
-            request.onerror = function (event) {
-                console.log('Error memuat data:', event.target.error);
-            };
+                        // RENDER GRID SETELAH DATA DILOAD
+                        renderGrid();
+                    } else {
+                        // Jika tidak ada data, render grid default
+                        console.log('Tidak ada data di IndexedDB, menggunakan default');
+                        renderGrid();
+                    }
+                };
+
+                request.onerror = function (event) {
+                    console.log('Error memuat data dari IndexedDB:', event.target.error);
+                    // Tetap render grid dengan data default
+                    renderGrid();
+                };
+            } catch (error) {
+                console.error('Error dalam loadFromIndexedDB:', error);
+                // Tetap render grid dengan data default
+                renderGrid();
+            }
         }
 
         // Reset semua data
@@ -1174,17 +1214,30 @@
             localStorage.setItem('hasSeenInstallPrompt', 'true');
         }
 
-        // Event Listeners
+        // Event Listeners - URUTAN DIPERBAIKI
         document.addEventListener('DOMContentLoaded', function () {
-            // Render grid awal
-            updateHitungHari();
+            console.log('DOM loaded, initializing app...');
 
-            // Inisialisasi IndexedDB
+            // Inisialisasi IndexedDB PERTAMA
             initIndexedDB();
 
             // Inisialisasi PWA
             initPWA();
 
+            // Setup event listeners
+            setupEventListeners();
+
+            // Jika IndexedDB belum siap, render grid default setelah timeout
+            setTimeout(() => {
+                if (daysData.length === 0) {
+                    console.log('Fallback: Rendering default grid');
+                    renderGrid();
+                }
+            }, 500);
+        });
+
+        // Setup semua event listeners
+        function setupEventListeners() {
             // Slider event
             document.getElementById('jamSlider').addEventListener('input', function () {
                 const value = this.value;
@@ -1351,8 +1404,8 @@
                         }, 1000);
                     }, index * 30);
                 });
-            }, 500);
-        });
+            }, 1000);
+        }
 
         // Handle file selection for import
         async function handleFileSelection(file) {
