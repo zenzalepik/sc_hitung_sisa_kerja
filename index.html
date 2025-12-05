@@ -49,6 +49,11 @@
         .pulse-install {
             animation: pulse-install 2s infinite;
         }
+
+        /* Import button style */
+        .import-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
     </style>
 </head>
 
@@ -56,35 +61,109 @@
     <div class="max-w-6xl mx-auto">
         <!-- PWA Install Prompt -->
         <div id="installPrompt"
-            class="hidden fixed bottom-4 left-4 right-4 bg-white rounded-xl shadow-2xl p-4 z-50 border border-blue-200 max-w-md mx-auto">
-            <div class="flex items-start">
-                <div class="bg-blue-100 p-3 rounded-lg mr-3">
-                    <i class="fas fa-download text-blue-600 text-xl"></i>
-                </div>
-                <div class="flex-1">
-                    <h3 class="font-bold text-gray-800">Install Aplikasi</h3>
-                    <p class="text-sm text-gray-600 mt-1">Install aplikasi untuk akses offline dan pengalaman yang lebih
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">Install Aplikasi</h3>
+                        <button id="closeInstall" class="text-gray-500 hover:text-gray-700 text-2xl">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 mb-6">Install aplikasi untuk akses offline dan pengalaman yang lebih
                         baik!</p>
-                    <div class="flex space-x-2 mt-3">
+                    <div class="flex space-x-3">
                         <button id="installCancel"
-                            class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
-                            Nanti
+                            class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
+                            Nanti Saja
                         </button>
                         <button id="installApp"
-                            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
-                            Install
+                            class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                            Install Sekarang
                         </button>
                     </div>
                 </div>
-                <button id="closeInstall" class="text-gray-400 hover:text-gray-600 ml-2">
-                    <i class="fas fa-times"></i>
-                </button>
+            </div>
+        </div>
+
+        <!-- Modal Import Data -->
+        <div id="importModal"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">
+                            <i class="fas fa-file-import text-green-600 mr-2"></i>
+                            Import Data
+                        </h3>
+                        <button id="closeImportModal" class="text-gray-500 hover:text-gray-700 text-2xl">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="mb-6">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-2"></i>
+                                <div class="text-sm text-yellow-800">
+                                    <span class="font-medium">Perhatian:</span> Import data akan menggantikan data yang
+                                    saat ini ada. Pastikan Anda sudah mengekspor data saat ini jika ingin menyimpannya.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-file-upload text-blue-600 mr-2"></i>
+                                    Pilih File JSON
+                                </label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                                    id="dropZone">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                                    <div class="font-medium text-gray-700 mb-1">Drag & drop file JSON di sini</div>
+                                    <div class="text-sm text-gray-500 mb-4">atau</div>
+                                    <input type="file" id="fileInput" accept=".json" class="hidden">
+                                    <label for="fileInput"
+                                        class="inline-block px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium cursor-pointer transition duration-200">
+                                        <i class="fas fa-folder-open mr-2"></i> Pilih File
+                                    </label>
+                                    <div class="text-xs text-gray-500 mt-3">
+                                        File harus dalam format JSON yang diekspor dari aplikasi ini
+                                    </div>
+                                </div>
+                                <div id="fileName" class="mt-2 text-sm text-gray-600 hidden">
+                                    <i class="fas fa-file mr-1"></i> <span></span>
+                                </div>
+                            </div>
+
+                            <div id="filePreview" class="hidden">
+                                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-60 overflow-y-auto">
+                                    <div class="font-medium text-gray-700 mb-2">Preview Data:</div>
+                                    <pre id="previewContent" class="text-xs text-gray-600 whitespace-pre-wrap"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button id="cancelImport"
+                            class="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition duration-200">
+                            Batal
+                        </button>
+                        <button id="confirmImport"
+                            class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                            <i class="fas fa-check mr-2"></i> Import Data
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Header dengan Install Button -->
         <header class="mb-8 text-center relative">
-            <div class="absolute right-0 top-0">
+            <div class="absolute right-0 top-0 flex space-x-2">
                 <button id="pwaInstallBtn"
                     class="hidden install-btn text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all pulse-install">
                     <i class="fas fa-download mr-2"></i> Install App
@@ -221,13 +300,21 @@
                         class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
                         <i class="fas fa-redo mr-2"></i> Reset Semua Data
                     </button>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="btnImport"
+                            class="import-btn text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
+                            <i class="fas fa-file-import mr-2"></i> Import
+                        </button>
+                        <button id="btnEkspor"
+                            class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
+                            <i class="fas fa-file-export mr-2"></i> Ekspor
+                        </button>
+                    </div>
+
                     <button id="btnSimpan"
                         class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
                         <i class="fas fa-save mr-2"></i> Simpan ke Database
-                    </button>
-                    <button id="btnEkspor"
-                        class="w-full bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
-                        <i class="fas fa-file-export mr-2"></i> Ekspor Data
                     </button>
                 </div>
 
@@ -253,6 +340,28 @@
                         <div class="flex items-center">
                             <div class="w-6 h-6 rounded mr-3 bg-green-400 border"></div>
                             <span class="text-gray-700">6-8 jam = Lunas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Import/Export -->
+                <div class="mt-6 pt-5 border-t border-gray-200">
+                    <h4 class="font-medium text-gray-700 mb-3">
+                        <i class="fas fa-exchange-alt text-blue-600 mr-2"></i>
+                        Backup & Restore
+                    </h4>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div class="flex items-start">
+                            <i class="fas fa-file-export text-green-500 mt-0.5 mr-2"></i>
+                            <span><span class="font-medium">Ekspor:</span> Simpan data ke file JSON</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-file-import text-blue-500 mt-0.5 mr-2"></i>
+                            <span><span class="font-medium">Import:</span> Muat data dari file JSON</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-database text-purple-500 mt-0.5 mr-2"></i>
+                            <span><span class="font-medium">Auto-save:</span> Data otomatis tersimpan di browser</span>
                         </div>
                     </div>
                 </div>
@@ -366,16 +475,16 @@
                     <span>Data tersimpan offline</span>
                 </div>
                 <div class="flex items-center">
-                    <i class="fas fa-cloud text-purple-500 mr-2"></i>
-                    <span>Auto-save ke IndexedDB</span>
+                    <i class="fas fa-cloud-upload-alt text-purple-500 mr-2"></i>
+                    <span>Import/Ekspor data JSON</span>
                 </div>
             </div>
             <p>© 2023 Nyaur Utang Waktu Kerja - Aplikasi PWA Tracking Waktu</p>
         </footer>
     </div>
 
-    <!-- Modal Popup -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-40">
+    <!-- Modal Edit Jam -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full transform transition-all duration-300 scale-95">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
@@ -484,6 +593,7 @@
         let totalHutang = 240; // Default 240 jam
         let db;
         let deferredPrompt;
+        let selectedFile = null;
 
         // Warna berdasarkan jam
         function getColorClass(jam) {
@@ -657,7 +767,7 @@
             updateStatistics();
         }
 
-        // Buka modal
+        // Buka modal edit jam
         function openModal(day, jam) {
             currentDay = day - 1;
             document.getElementById('modalDay').textContent = day;
@@ -675,6 +785,16 @@
             }, 10);
         }
 
+        // Buka modal import
+        function openImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('importModal').classList.add('flex');
+                document.querySelector('#importModal > div').classList.remove('scale-95');
+                document.querySelector('#importModal > div').classList.add('scale-100');
+            }, 10);
+        }
+
         // Tutup modal
         function closeModal() {
             document.querySelector('#modal > div').classList.remove('scale-100');
@@ -684,6 +804,27 @@
                 document.getElementById('modal').classList.remove('flex');
                 document.getElementById('modal').classList.add('hidden');
             }, 300);
+        }
+
+        // Tutup modal import
+        function closeImportModal() {
+            document.querySelector('#importModal > div').classList.remove('scale-100');
+            document.querySelector('#importModal > div').classList.add('scale-95');
+
+            setTimeout(() => {
+                document.getElementById('importModal').classList.remove('flex');
+                document.getElementById('importModal').classList.add('hidden');
+                resetImportForm();
+            }, 300);
+        }
+
+        // Reset form import
+        function resetImportForm() {
+            selectedFile = null;
+            document.getElementById('fileName').classList.add('hidden');
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('confirmImport').disabled = true;
+            document.getElementById('fileInput').value = '';
         }
 
         // Update indikator jam
@@ -706,7 +847,7 @@
             }
         }
 
-        // Simpan perubahan
+        // Simpan perubahan jam
         function saveChanges() {
             const jamValue = parseInt(document.getElementById('jamSlider').value);
             daysData[currentDay] = jamValue;
@@ -732,10 +873,19 @@
         }
 
         // Tampilkan toast
-        function showToast(title, message) {
+        function showToast(title, message, type = 'success') {
             const toast = document.getElementById('toast');
             document.getElementById('toastTitle').textContent = title;
             document.getElementById('toastMessage').textContent = message;
+
+            // Ubah warna berdasarkan type
+            if (type === 'error') {
+                toast.className = 'fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-lg hidden transform transition-transform duration-300 translate-y-full z-50 max-w-sm';
+            } else if (type === 'warning') {
+                toast.className = 'fixed bottom-4 right-4 bg-yellow-600 text-white p-4 rounded-lg shadow-lg hidden transform transition-transform duration-300 translate-y-full z-50 max-w-sm';
+            } else {
+                toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg hidden transform transition-transform duration-300 translate-y-full z-50 max-w-sm';
+            }
 
             toast.classList.remove('hidden', 'translate-y-full');
 
@@ -745,9 +895,114 @@
             }, 3000);
         }
 
+        // Validasi data import
+        function validateImportData(data) {
+            try {
+                // Cek struktur dasar
+                if (!data || typeof data !== 'object') {
+                    return { valid: false, message: "File tidak valid: format JSON tidak sesuai" };
+                }
+
+                // Cek field yang diperlukan
+                if (typeof data.totalHutang !== 'number' || data.totalHutang < 1) {
+                    return { valid: false, message: "Data tidak valid: totalHutang harus angka positif" };
+                }
+
+                if (typeof data.jamPerHari !== 'number' || data.jamPerHari < 1 || data.jamPerHari > 24) {
+                    return { valid: false, message: "Data tidak valid: jamPerHari harus antara 1-24" };
+                }
+
+                if (!Array.isArray(data.data)) {
+                    return { valid: false, message: "Data tidak valid: field 'data' harus array" };
+                }
+
+                // Validasi setiap item dalam array
+                for (let i = 0; i < data.data.length; i++) {
+                    const jam = data.data[i];
+                    if (typeof jam !== 'number' || jam < 0 || jam > 8) {
+                        return { valid: false, message: `Data tidak valid: item ke-${i + 1} harus angka 0-8` };
+                    }
+                }
+
+                return { valid: true, message: "Data valid" };
+            } catch (error) {
+                return { valid: false, message: `Error validasi: ${error.message}` };
+            }
+        }
+
+        // Import data dari file
+        async function importData(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = function (event) {
+                    try {
+                        const content = event.target.result;
+                        const data = JSON.parse(content);
+
+                        // Validasi data
+                        const validation = validateImportData(data);
+                        if (!validation.valid) {
+                            reject(new Error(validation.message));
+                            return;
+                        }
+
+                        resolve(data);
+                    } catch (error) {
+                        reject(new Error(`Gagal parsing JSON: ${error.message}`));
+                    }
+                };
+
+                reader.onerror = function () {
+                    reject(new Error("Gagal membaca file"));
+                };
+
+                reader.readAsText(file);
+            });
+        }
+
+        // Proses import data
+        async function processImport() {
+            if (!selectedFile) {
+                showToast('Import Gagal', 'Pilih file terlebih dahulu', 'error');
+                return;
+            }
+
+            try {
+                const data = await importData(selectedFile);
+
+                // Update data aplikasi
+                daysData = data.data;
+                totalHutang = data.totalHutang;
+                jamPerHari = data.jamPerHari;
+
+                // Update UI
+                document.getElementById('totalHutang').value = totalHutang;
+                document.getElementById('jamPerHari').textContent = jamPerHari;
+
+                // Render ulang dan simpan
+                updateHitungHari();
+                saveToIndexedDB();
+
+                // Tutup modal
+                closeImportModal();
+
+                // Tampilkan notifikasi sukses
+                showToast(
+                    'Import Berhasil',
+                    `${data.data.length} hari data berhasil diimport`,
+                    'success'
+                );
+
+            } catch (error) {
+                showToast('Import Gagal', error.message, 'error');
+                console.error('Import error:', error);
+            }
+        }
+
         // IndexedDB Functions
         function initIndexedDB() {
-            const request = indexedDB.open('UtangWaktuKerjaPWA', 2);
+            const request = indexedDB.open('UtangWaktuKerjaPWA', 3);
 
             request.onerror = function (event) {
                 console.log('Error membuka database:', event.target.error);
@@ -779,7 +1034,8 @@
                 id: 'utangData',
                 days: daysData,
                 total: totalHutang,
-                jamPerHari: jamPerHari
+                jamPerHari: jamPerHari,
+                lastUpdated: new Date().toISOString()
             };
 
             const request = objectStore.put(data);
@@ -834,7 +1090,9 @@
                 jamPerHari: jamPerHari,
                 hari: daysData.length,
                 data: daysData,
-                tanggalEkspor: new Date().toISOString()
+                tanggalEkspor: new Date().toISOString(),
+                aplikasi: "Nyaur Utang Waktu Kerja",
+                versi: "1.0.0"
             };
 
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -949,7 +1207,7 @@
             document.getElementById('btnCancel').addEventListener('click', closeModal);
             document.getElementById('btnSaveModal').addEventListener('click', saveChanges);
 
-            // Tombol aksi
+            // Tombol aksi utama
             document.getElementById('btnReset').addEventListener('click', resetData);
             document.getElementById('btnSimpan').addEventListener('click', function () {
                 saveToIndexedDB();
@@ -957,6 +1215,7 @@
             });
 
             document.getElementById('btnEkspor').addEventListener('click', eksporData);
+            document.getElementById('btnImport').addEventListener('click', openImportModal);
 
             // Input total hutang
             document.getElementById('totalHutang').addEventListener('change', function () {
@@ -998,10 +1257,67 @@
 
             document.getElementById('pwaInstallBtn').addEventListener('click', installPWA);
 
+            // Import Modal events
+            document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
+            document.getElementById('cancelImport').addEventListener('click', closeImportModal);
+            document.getElementById('confirmImport').addEventListener('click', processImport);
+
+            // File input events
+            document.getElementById('fileInput').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFileSelection(file);
+                }
+            });
+
+            // Drag and drop events
+            const dropZone = document.getElementById('dropZone');
+
+            dropZone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-400', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/json') {
+                    handleFileSelection(file);
+                    // Set file input untuk konsistensi
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    document.getElementById('fileInput').files = dataTransfer.files;
+                } else {
+                    showToast('File tidak valid', 'Hanya file JSON yang didukung', 'error');
+                }
+            });
+
+            // Click drop zone to trigger file input
+            dropZone.addEventListener('click', function (e) {
+                if (e.target === dropZone || e.target.classList.contains('fa-cloud-upload-alt')) {
+                    document.getElementById('fileInput').click();
+                }
+            });
+
             // Tutup modal dengan ESC
             document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && !document.getElementById('modal').classList.contains('hidden')) {
-                    closeModal();
+                if (e.key === 'Escape') {
+                    if (!document.getElementById('modal').classList.contains('hidden')) {
+                        closeModal();
+                    }
+                    if (!document.getElementById('importModal').classList.contains('hidden')) {
+                        closeImportModal();
+                    }
+                    if (!document.getElementById('installPrompt').classList.contains('hidden')) {
+                        document.getElementById('installPrompt').classList.add('hidden');
+                    }
                 }
             });
 
@@ -1009,6 +1325,18 @@
             document.getElementById('modal').addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeModal();
+                }
+            });
+
+            document.getElementById('importModal').addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closeImportModal();
+                }
+            });
+
+            document.getElementById('installPrompt').addEventListener('click', function (e) {
+                if (e.target === this) {
+                    document.getElementById('installPrompt').classList.add('hidden');
                 }
             });
 
@@ -1025,6 +1353,49 @@
                 });
             }, 500);
         });
+
+        // Handle file selection for import
+        async function handleFileSelection(file) {
+            if (!file || file.type !== 'application/json') {
+                showToast('File tidak valid', 'Hanya file JSON yang didukung', 'error');
+                return;
+            }
+
+            selectedFile = file;
+
+            // Update UI
+            document.getElementById('fileName').classList.remove('hidden');
+            document.getElementById('fileName').querySelector('span').textContent = file.name;
+
+            try {
+                // Preview data
+                const data = await importData(file);
+                const validation = validateImportData(data);
+
+                if (validation.valid) {
+                    // Tampilkan preview
+                    document.getElementById('filePreview').classList.remove('hidden');
+                    const previewContent = {
+                        totalHutang: data.totalHutang,
+                        jamPerHari: data.jamPerHari,
+                        jumlahHari: data.data.length,
+                        dataPreview: data.data.slice(0, 10) // Hanya tampilkan 10 data pertama
+                    };
+
+                    document.getElementById('previewContent').textContent =
+                        JSON.stringify(previewContent, null, 2);
+
+                    // Enable tombol import
+                    document.getElementById('confirmImport').disabled = false;
+                } else {
+                    showToast('Validasi gagal', validation.message, 'error');
+                    resetImportForm();
+                }
+            } catch (error) {
+                showToast('Error membaca file', error.message, 'error');
+                resetImportForm();
+            }
+        }
     </script>
 
     <!-- Service Worker Registration -->
