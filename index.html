@@ -1,57 +1,111 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="description" content="Aplikasi tracking utang waktu kerja dengan format jam bulat dan PWA support">
     <title>Nyaur Utang Waktu Kerja</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏰</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .color-0 { background-color: #f3f4f6; }
-        .color-1-50 { background-color: #fef3c7; }
-        .color-51-70 { background-color: #fb923c; }
-        .color-71-80 { background-color: #4ade80; }
-        
-        .animate-pulse-slow {
-            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .color-0 {
+            background-color: #f3f4f6;
         }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+        .color-1 {
+            background-color: #fef3c7;
         }
-        
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
+
+        .color-2 {
+            background-color: #fb923c;
         }
-        
-        .slider-green::-webkit-slider-thumb {
-            background: #10b981;
+
+        .color-3 {
+            background-color: #4ade80;
         }
-        
-        .slider-orange::-webkit-slider-thumb {
-            background: #f59e0b;
+
+        .install-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        
-        .slider-yellow::-webkit-slider-thumb {
-            background: #fbbf24;
+
+        /* PWA Install button animation */
+        @keyframes pulse-install {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse-install {
+            animation: pulse-install 2s infinite;
         }
     </style>
 </head>
+
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen p-4 md:p-6">
     <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="mb-8 text-center">
+        <!-- PWA Install Prompt -->
+        <div id="installPrompt"
+            class="hidden fixed bottom-4 left-4 right-4 bg-white rounded-xl shadow-2xl p-4 z-50 border border-blue-200 max-w-md mx-auto">
+            <div class="flex items-start">
+                <div class="bg-blue-100 p-3 rounded-lg mr-3">
+                    <i class="fas fa-download text-blue-600 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-gray-800">Install Aplikasi</h3>
+                    <p class="text-sm text-gray-600 mt-1">Install aplikasi untuk akses offline dan pengalaman yang lebih
+                        baik!</p>
+                    <div class="flex space-x-2 mt-3">
+                        <button id="installCancel"
+                            class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
+                            Nanti
+                        </button>
+                        <button id="installApp"
+                            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                            Install
+                        </button>
+                    </div>
+                </div>
+                <button id="closeInstall" class="text-gray-400 hover:text-gray-600 ml-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Header dengan Install Button -->
+        <header class="mb-8 text-center relative">
+            <div class="absolute right-0 top-0">
+                <button id="pwaInstallBtn"
+                    class="hidden install-btn text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all pulse-install">
+                    <i class="fas fa-download mr-2"></i> Install App
+                </button>
+            </div>
+
             <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
                 <i class="fas fa-clock text-blue-600 mr-3"></i>
                 Nyaur Utang Waktu Kerja
             </h1>
-            <p class="text-gray-600">Track dan kelola pembayaran utang waktu kerja Anda</p>
+            <p class="text-gray-600">Track dan kelola pembayaran utang waktu kerja dengan sistem jam bulat</p>
+
+            <!-- Offline Status -->
+            <div id="offlineStatus"
+                class="hidden mt-2 inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm">
+                <i class="fas fa-wifi-slash mr-2"></i> Offline Mode
+            </div>
+            <div id="onlineStatus"
+                class="hidden mt-2 inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm">
+                <i class="fas fa-wifi mr-2"></i> Online
+            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -61,90 +115,127 @@
                     <i class="fas fa-calculator text-blue-600 mr-2"></i>
                     Kalkulator Utang
                 </h2>
-                
-                <!-- Input Total Hutang -->
+
+                <!-- Input Total Hutang (Jam Bulat) -->
                 <div class="mb-6">
                     <label class="block text-gray-700 mb-2 font-medium">
                         <i class="fas fa-file-invoice-dollar text-green-600 mr-2"></i>
                         Total Hutang (Jam)
                     </label>
                     <div class="relative">
-                        <input 
-                            type="number" 
-                            id="totalHutang" 
-                            min="0" 
+                        <input type="number" id="totalHutang" min="1" max="1000"
                             class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Masukkan total jam hutang"
-                            value="240"
-                        >
+                            placeholder="Masukkan total jam hutang" value="240">
                         <i class="fas fa-clock absolute left-3 top-3.5 text-gray-400"></i>
                     </div>
+                    <div id="hitungHari" class="text-sm text-blue-600 mt-2 font-medium">
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        <span id="totalHariText">240 jam = 30 hari kerja (8 jam/hari)</span>
+                    </div>
                 </div>
-                
-                <!-- Statistik -->
+
+                <!-- Kalkulasi Hari -->
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 mb-6 border border-blue-100">
                     <h3 class="font-bold text-gray-800 mb-4">
-                        <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                        <i class="fas fa-calendar-day text-blue-600 mr-2"></i>
+                        Kalkulasi Hari
+                    </h3>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Jam per Hari:</span>
+                            <div class="flex items-center space-x-2">
+                                <button id="btnMinusJam"
+                                    class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span id="jamPerHari" class="font-bold text-blue-600 w-12 text-center">8</span>
+                                <button id="btnPlusJam"
+                                    class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <span class="text-gray-600 ml-1">jam</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-blue-200">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-blue-700" id="perkiraanHari">30</div>
+                                <div class="text-gray-600">hari kerja dibutuhkan</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistik -->
+                <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-5 mb-6 border border-purple-100">
+                    <h3 class="font-bold text-gray-800 mb-4">
+                        <i class="fas fa-chart-bar text-purple-600 mr-2"></i>
                         Statistik Pembayaran
                     </h3>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <div class="flex justify-between mb-1">
                                 <span class="text-gray-700">Sudah Dibayar:</span>
                                 <span id="sudahDibayar" class="font-bold text-green-600">0 jam</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div id="progressBar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div id="progressBar" class="bg-green-600 h-3 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span id="sisaHutangText">Sisa: 240 jam</span>
+                                <span id="persentase">0%</span>
                             </div>
                         </div>
-                        
+
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-white p-3 rounded-lg border text-center">
                                 <div class="text-2xl font-bold text-green-600" id="countHijau">0</div>
-                                <div class="text-sm text-gray-600">Lunas (71-80)</div>
+                                <div class="text-sm text-gray-600">Lunas (6-8 jam)</div>
                             </div>
                             <div class="bg-white p-3 rounded-lg border text-center">
                                 <div class="text-2xl font-bold text-orange-600" id="countOrange">0</div>
-                                <div class="text-sm text-gray-600">Sedang (51-70)</div>
+                                <div class="text-sm text-gray-600">Sedang (4-5 jam)</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Persentase -->
-                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+
+                <!-- Estimasi Penyelesaian -->
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100 mb-6">
                     <h3 class="font-bold text-gray-800 mb-3">
-                        <i class="fas fa-percentage text-green-600 mr-2"></i>
-                        Persentase Pembayaran
+                        <i class="fas fa-calendar-check text-green-600 mr-2"></i>
+                        Estimasi Penyelesaian
                     </h3>
                     <div class="text-center">
-                        <div class="text-5xl font-bold text-green-700 mb-2" id="persentase">0%</div>
-                        <div class="text-gray-600">Dari total hutang telah dibayar</div>
+                        <div class="text-2xl font-bold text-green-700 mb-1" id="estimasiHari">∞</div>
+                        <div class="text-gray-600">hari tersisa</div>
+                        <div class="text-xs text-gray-500 mt-2" id="estimasiRata">Berdasarkan rata-rata pembayaran</div>
                     </div>
                 </div>
-                
+
                 <!-- Tombol Aksi -->
                 <div class="mt-6 space-y-3">
-                    <button 
-                        id="btnReset" 
-                        class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center"
-                    >
+                    <button id="btnReset"
+                        class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
                         <i class="fas fa-redo mr-2"></i> Reset Semua Data
                     </button>
-                    <button 
-                        id="btnSimpan" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center"
-                    >
+                    <button id="btnSimpan"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
                         <i class="fas fa-save mr-2"></i> Simpan ke Database
                     </button>
+                    <button id="btnEkspor"
+                        class="w-full bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center">
+                        <i class="fas fa-file-export mr-2"></i> Ekspor Data
+                    </button>
                 </div>
-                
+
                 <!-- Info Legend -->
                 <div class="mt-6 pt-5 border-t border-gray-200">
                     <h4 class="font-medium text-gray-700 mb-3">
                         <i class="fas fa-palette text-purple-600 mr-2"></i>
-                        Legend Warna:
+                        Kategori Jam:
                     </h4>
                     <div class="space-y-2">
                         <div class="flex items-center">
@@ -153,20 +244,20 @@
                         </div>
                         <div class="flex items-center">
                             <div class="w-6 h-6 rounded mr-3 bg-yellow-200 border"></div>
-                            <span class="text-gray-700">1-50 = Pembayaran awal</span>
+                            <span class="text-gray-700">1-3 jam = Pembayaran awal</span>
                         </div>
                         <div class="flex items-center">
                             <div class="w-6 h-6 rounded mr-3 bg-orange-400 border"></div>
-                            <span class="text-gray-700">51-70 = Pembayaran sedang</span>
+                            <span class="text-gray-700">4-5 jam = Pembayaran sedang</span>
                         </div>
                         <div class="flex items-center">
                             <div class="w-6 h-6 rounded mr-3 bg-green-400 border"></div>
-                            <span class="text-gray-700">71-80 = Lunas</span>
+                            <span class="text-gray-700">6-8 jam = Lunas</span>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Grid Angka -->
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-xl shadow-lg p-6">
@@ -176,14 +267,38 @@
                             Daftar Pembayaran Per Hari
                         </h2>
                         <div class="text-gray-600">
-                            Total: <span class="font-bold text-blue-600">30 hari</span>
+                            <span id="hariBerjalan">Hari 1-30</span> dari <span class="font-bold text-blue-600"
+                                id="totalGridHari">30</span> hari
                         </div>
                     </div>
-                    
+
+                    <!-- Petunjuk Pengisian -->
+                    <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-500 mt-1 mr-2"></i>
+                            <div class="text-sm text-gray-700">
+                                <span class="font-medium">Cara mengisi:</span> Klik salah satu kotak hari, lalu pilih
+                                jumlah jam (0-8).
+                                <span class="font-medium ml-2">Sistem jam bulat</span> - tidak ada menit.
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-10 gap-3" id="gridContainer">
                         <!-- Grid akan di-generate oleh JavaScript -->
                     </div>
-                    
+
+                    <!-- Ringkasan Mingguan -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h3 class="font-bold text-gray-800 mb-4">
+                            <i class="fas fa-chart-pie text-blue-600 mr-2"></i>
+                            Ringkasan per Minggu
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3" id="weeklySummary">
+                            <!-- Ringkasan mingguan akan di-generate -->
+                        </div>
+                    </div>
+
                     <!-- Info Status -->
                     <div class="mt-8 pt-6 border-t border-gray-200">
                         <div class="flex flex-wrap justify-center gap-4">
@@ -193,207 +308,365 @@
                             </div>
                             <div class="flex items-center">
                                 <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
-                                <span class="text-gray-700">Lunas: <span id="countHijau2">0</span></span>
+                                <span class="text-gray-700">Lunas (6-8 jam): <span id="countHijau2">0</span></span>
                             </div>
                             <div class="flex items-center">
                                 <div class="w-4 h-4 rounded-full bg-yellow-400 mr-2"></div>
-                                <span class="text-gray-700">Progress: <span id="countTotal">0</span> hari</span>
+                                <span class="text-gray-700">Terisi: <span id="countTotal">0</span> hari</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Chart Mini -->
+                <div class="mt-6 bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-tasks text-blue-600 mr-2"></i>
+                        Progress Tracking
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-gray-700">Target: <span id="targetHari">30</span> hari</span>
+                                <span class="text-gray-700">Progress: <span id="progressHari">0</span> hari</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div id="progressBarHari" class="bg-blue-600 h-4 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <div class="text-xl font-bold text-blue-700" id="avgPerHari">0.0</div>
+                                <div class="text-sm text-gray-600">Rata-rata jam/hari</div>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-lg">
+                                <div class="text-xl font-bold text-green-700" id="totalJamTerbayar">0</div>
+                                <div class="text-sm text-gray-600">Total jam terbayar</div>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-lg">
+                                <div class="text-xl font-bold text-purple-700" id="efisiensi">0%</div>
+                                <div class="text-sm text-gray-600">Efisiensi</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Footer -->
+
+        <!-- Footer dengan PWA Info -->
         <footer class="mt-8 text-center text-gray-600 text-sm">
-            <p>Data disimpan secara lokal menggunakan IndexedDB. Data tetap tersimpan meski browser ditutup.</p>
-            <p class="mt-2">© 2023 Nyaur Utang Waktu Kerja - Tracking Application</p>
+            <div class="flex flex-wrap justify-center items-center gap-4 mb-3">
+                <div class="flex items-center">
+                    <i class="fas fa-mobile-alt text-blue-500 mr-2"></i>
+                    <span>Aplikasi PWA - Dapat diinstall</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-database text-green-500 mr-2"></i>
+                    <span>Data tersimpan offline</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-cloud text-purple-500 mr-2"></i>
+                    <span>Auto-save ke IndexedDB</span>
+                </div>
+            </div>
+            <p>© 2023 Nyaur Utang Waktu Kerja - Aplikasi PWA Tracking Waktu</p>
         </footer>
     </div>
-    
+
     <!-- Modal Popup -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95">
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-40">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full transform transition-all duration-300 scale-95">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold text-gray-800">
                         <i class="fas fa-edit text-blue-600 mr-2"></i>
-                        Edit Pembayaran Hari <span id="modalDay">1</span>
+                        Hari <span id="modalDay">1</span>
                     </h3>
                     <button id="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
-                <div class="mb-8">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-gray-700 font-medium">Tingkat Pembayaran:</span>
-                        <span id="sliderValue" class="font-bold text-blue-600 text-xl">0</span>
+
+                <div class="mb-6">
+                    <div class="text-center mb-4">
+                        <div class="text-3xl font-bold text-blue-600" id="selectedValue">0</div>
+                        <div class="text-gray-600">jam</div>
                     </div>
-                    <input 
-                        type="range" 
-                        id="paymentSlider" 
-                        min="0" 
-                        max="80" 
-                        value="0" 
-                        class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                    >
-                    
-                    <div class="flex justify-between text-xs text-gray-500 mt-2">
-                        <span>Belum Bayar</span>
-                        <span>Sedang</span>
+
+                    <!-- Slider Jam -->
+                    <input type="range" id="jamSlider" min="0" max="8" value="0" step="1"
+                        class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600">
+
+                    <!-- Tombol Jam Cepat -->
+                    <div class="grid grid-cols-4 gap-2 mt-4">
+                        <button class="jam-btn p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
+                            data-jam="0">
+                            0
+                        </button>
+                        <button
+                            class="jam-btn p-3 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 font-medium"
+                            data-jam="2">
+                            2
+                        </button>
+                        <button
+                            class="jam-btn p-3 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 font-medium"
+                            data-jam="4">
+                            4
+                        </button>
+                        <button
+                            class="jam-btn p-3 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 font-medium"
+                            data-jam="8">
+                            8
+                        </button>
+                    </div>
+
+                    <div class="flex justify-between text-xs text-gray-500 mt-3">
+                        <span>Belum bayar</span>
                         <span>Lunas</span>
                     </div>
                 </div>
-                
+
                 <!-- Indikator Warna -->
                 <div class="mb-6">
-                    <div class="font-medium text-gray-700 mb-3">Indikator:</div>
+                    <div class="font-medium text-gray-700 mb-3">Kategori:</div>
                     <div class="grid grid-cols-4 gap-2">
                         <div class="text-center p-2 bg-gray-100 rounded" id="indicator0">
                             <div class="font-bold text-gray-700">0</div>
-                            <div class="text-xs">Kosong</div>
+                            <div class="text-xs">Belum</div>
                         </div>
                         <div class="text-center p-2 bg-yellow-100 rounded border border-yellow-200" id="indicator1">
-                            <div class="font-bold text-gray-700">1-50</div>
+                            <div class="font-bold text-gray-700">1-3</div>
                             <div class="text-xs">Awal</div>
                         </div>
                         <div class="text-center p-2 bg-orange-100 rounded border border-orange-200" id="indicator2">
-                            <div class="font-bold text-gray-700">51-70</div>
+                            <div class="font-bold text-gray-700">4-5</div>
                             <div class="text-xs">Sedang</div>
                         </div>
                         <div class="text-center p-2 bg-green-100 rounded border border-green-200" id="indicator3">
-                            <div class="font-bold text-gray-700">71-80</div>
+                            <div class="font-bold text-gray-700">6-8</div>
                             <div class="text-xs">Lunas</div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="flex justify-end space-x-3">
-                    <button 
-                        id="btnCancel" 
-                        class="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition duration-200"
-                    >
+                    <button id="btnCancel"
+                        class="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition duration-200">
                         Batal
                     </button>
-                    <button 
-                        id="btnSaveModal" 
-                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition duration-200 flex items-center"
-                    >
+                    <button id="btnSaveModal"
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition duration-200 flex items-center">
                         <i class="fas fa-check mr-2"></i> Simpan
                     </button>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg hidden transform transition-transform duration-300 translate-y-full z-50">
+    <div id="toast"
+        class="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg hidden transform transition-transform duration-300 translate-y-full z-50 max-w-sm">
         <div class="flex items-center">
             <i class="fas fa-check-circle text-xl mr-3"></i>
             <div>
-                <div class="font-bold">Berhasil disimpan!</div>
-                <div class="text-sm opacity-90">Data telah disimpan ke IndexedDB.</div>
+                <div class="font-bold" id="toastTitle">Berhasil!</div>
+                <div class="text-sm opacity-90" id="toastMessage">Data telah disimpan.</div>
             </div>
         </div>
     </div>
 
     <script>
         // Inisialisasi variabel
-        let daysData = Array(30).fill(0);
+        let daysData = Array(30).fill(0); // Jam per hari (0-8)
         let currentDay = 0;
-        let totalHutang = 240; // Default value
+        let jamPerHari = 8; // Default 8 jam per hari
+        let totalHutang = 240; // Default 240 jam
         let db;
-        
-        // Warna berdasarkan nilai
-        function getColorClass(value) {
-            if (value === 0) return 'color-0';
-            if (value >= 1 && value <= 50) return 'color-1-50';
-            if (value >= 51 && value <= 70) return 'color-51-70';
-            if (value >= 71 && value <= 80) return 'color-71-80';
+        let deferredPrompt;
+
+        // Warna berdasarkan jam
+        function getColorClass(jam) {
+            if (jam === 0) return 'color-0';
+            if (jam >= 1 && jam <= 3) return 'color-1';
+            if (jam >= 4 && jam <= 5) return 'color-2';
+            if (jam >= 6 && jam <= 8) return 'color-3';
             return 'color-0';
         }
-        
-        // Format angka
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+        // Update kalkulasi hari
+        function updateHitungHari() {
+            totalHutang = parseInt(document.getElementById('totalHutang').value) || 240;
+            jamPerHari = parseInt(document.getElementById('jamPerHari').textContent) || 8;
+
+            const totalHari = Math.ceil(totalHutang / jamPerHari);
+
+            document.getElementById('totalHariText').textContent =
+                `${totalHutang} jam = ${totalHari} hari kerja (${jamPerHari} jam/hari)`;
+
+            document.getElementById('perkiraanHari').textContent = totalHari;
+            document.getElementById('totalGridHari').textContent = totalHari;
+            document.getElementById('targetHari').textContent = totalHari;
+
+            // Update grid jika diperlukan
+            if (totalHari !== daysData.length) {
+                if (totalHari > daysData.length) {
+                    // Tambah hari
+                    const tambah = totalHari - daysData.length;
+                    daysData = [...daysData, ...Array(tambah).fill(0)];
+                } else {
+                    // Kurangi hari (jaga data yang ada)
+                    daysData = daysData.slice(0, totalHari);
+                }
+                renderGrid();
+            }
+
+            updateStatistics();
         }
-        
+
         // Update statistik
         function updateStatistics() {
-            const sudahDibayar = daysData.reduce((sum, value) => sum + value, 0);
-            const totalHutangInput = parseInt(document.getElementById('totalHutang').value) || totalHutang;
-            
-            // Hitung persentase
-            const persentase = totalHutangInput > 0 ? Math.min(100, (sudahDibayar / totalHutangInput) * 100) : 0;
-            
-            // Hitung jumlah per kategori
-            const countHijau = daysData.filter(v => v >= 71 && v <= 80).length;
-            const countOrange = daysData.filter(v => v >= 51 && v <= 70).length;
-            const countYellow = daysData.filter(v => v >= 1 && v <= 50).length;
-            const countKosong = daysData.filter(v => v === 0).length;
-            
+            // Hitung statistik
+            const totalJamTerbayar = daysData.reduce((sum, jam) => sum + jam, 0);
+            const sisaHutang = Math.max(0, totalHutang - totalJamTerbayar);
+            const persentase = totalHutang > 0 ? (totalJamTerbayar / totalHutang) * 100 : 0;
+
+            // Hitung per kategori
+            const countHijau = daysData.filter(j => j >= 6 && j <= 8).length;
+            const countOrange = daysData.filter(j => j >= 4 && j <= 5).length;
+            const countKuning = daysData.filter(j => j >= 1 && j <= 3).length;
+            const countKosong = daysData.filter(j => j === 0).length;
+            const hariTerisi = daysData.length - countKosong;
+
+            // Rata-rata per hari yang terisi
+            const rataPerHari = hariTerisi > 0 ? (totalJamTerbayar / hariTerisi).toFixed(1) : "0.0";
+
+            // Estimasi penyelesaian
+            let estimasiHari = "∞";
+            if (parseFloat(rataPerHari) > 0) {
+                estimasiHari = Math.ceil(sisaHutang / parseFloat(rataPerHari));
+            }
+
+            // Efisiensi (berapa persen dari jam per hari yang terpakai)
+            const efisiensi = jamPerHari > 0 ? (parseFloat(rataPerHari) / jamPerHari) * 100 : 0;
+
             // Update UI
-            document.getElementById('sudahDibayar').textContent = `${formatNumber(sudahDibayar)} jam`;
+            document.getElementById('sudahDibayar').textContent = `${totalJamTerbayar} jam`;
+            document.getElementById('sisaHutangText').textContent = `Sisa: ${sisaHutang} jam`;
             document.getElementById('persentase').textContent = `${persentase.toFixed(1)}%`;
             document.getElementById('progressBar').style.width = `${persentase}%`;
-            
+
             document.getElementById('countHijau').textContent = countHijau;
             document.getElementById('countHijau2').textContent = countHijau;
             document.getElementById('countOrange').textContent = countOrange;
             document.getElementById('countKosong').textContent = countKosong;
-            document.getElementById('countTotal').textContent = 30 - countKosong;
-            
-            // Update progress bar color based on percentage
+            document.getElementById('countTotal').textContent = hariTerisi;
+
+            document.getElementById('estimasiHari').textContent = estimasiHari;
+            document.getElementById('estimasiRata').textContent = `Berdasarkan rata-rata ${rataPerHari} jam/hari`;
+
+            document.getElementById('avgPerHari').textContent = rataPerHari;
+            document.getElementById('totalJamTerbayar').textContent = totalJamTerbayar;
+            document.getElementById('efisiensi').textContent = `${efisiensi.toFixed(0)}%`;
+
+            // Progress bar hari
+            const progressHari = hariTerisi;
+            const totalHari = daysData.length;
+            const progressPersen = totalHari > 0 ? (progressHari / totalHari) * 100 : 0;
+
+            document.getElementById('progressHari').textContent = progressHari;
+            document.getElementById('progressBarHari').style.width = `${progressPersen}%`;
+
+            // Update warna progress bar berdasarkan persentase
             const progressBar = document.getElementById('progressBar');
             if (persentase < 30) {
-                progressBar.classList.remove('bg-green-600', 'bg-yellow-500');
-                progressBar.classList.add('bg-red-500');
+                progressBar.className = 'bg-red-500 h-3 rounded-full';
             } else if (persentase < 70) {
-                progressBar.classList.remove('bg-red-500', 'bg-green-600');
-                progressBar.classList.add('bg-yellow-500');
+                progressBar.className = 'bg-yellow-500 h-3 rounded-full';
             } else {
-                progressBar.classList.remove('bg-red-500', 'bg-yellow-500');
-                progressBar.classList.add('bg-green-600');
+                progressBar.className = 'bg-green-600 h-3 rounded-full';
+            }
+
+            // Update ringkasan mingguan
+            updateWeeklySummary();
+
+            // Update hari berjalan
+            const totalGridHari = daysData.length;
+            document.getElementById('hariBerjalan').textContent = `Hari 1-${totalGridHari}`;
+        }
+
+        // Update ringkasan mingguan
+        function updateWeeklySummary() {
+            const container = document.getElementById('weeklySummary');
+            container.innerHTML = '';
+
+            const totalHari = daysData.length;
+            const minggu = Math.ceil(totalHari / 7);
+
+            for (let week = 0; week < minggu; week++) {
+                const weekStart = week * 7;
+                const weekEnd = Math.min(weekStart + 6, totalHari - 1);
+
+                let weekTotalJam = 0;
+                let weekHariTerisi = 0;
+
+                for (let i = weekStart; i <= weekEnd; i++) {
+                    weekTotalJam += daysData[i];
+                    if (daysData[i] > 0) weekHariTerisi++;
+                }
+
+                const weekElement = document.createElement('div');
+                weekElement.className = 'bg-gray-50 rounded-lg p-4 border';
+                weekElement.innerHTML = `
+                    <div class="font-bold text-gray-800 mb-2">Minggu ${week + 1}</div>
+                    <div class="text-2xl font-bold ${weekTotalJam >= (jamPerHari * (weekEnd - weekStart + 1) * 0.7) ? 'text-green-600' : 'text-blue-600'} mb-1">
+                        ${weekTotalJam} jam
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        ${weekHariTerisi}/${weekEnd - weekStart + 1} hari<br>
+                        ${((weekTotalJam / ((weekEnd - weekStart + 1) * jamPerHari)) * 100).toFixed(0)}% target
+                    </div>
+                `;
+
+                container.appendChild(weekElement);
             }
         }
-        
+
         // Render grid
         function renderGrid() {
             const container = document.getElementById('gridContainer');
             container.innerHTML = '';
-            
-            daysData.forEach((value, index) => {
+
+            daysData.forEach((jam, index) => {
                 const day = index + 1;
-                const colorClass = getColorClass(value);
-                
+                const colorClass = getColorClass(jam);
+
                 const dayElement = document.createElement('div');
                 dayElement.className = `aspect-square rounded-xl border-2 border-gray-200 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-md ${colorClass}`;
                 dayElement.innerHTML = `
                     <div class="text-lg font-bold text-gray-800">${day}</div>
-                    <div class="text-sm font-medium mt-1 ${value === 0 ? 'text-gray-500' : 'text-gray-800'}">
-                        ${value > 0 ? value + ' pt' : '-'}
+                    <div class="text-sm font-medium mt-1 ${jam === 0 ? 'text-gray-500' : 'text-gray-800'}">
+                        ${jam === 0 ? '-' : `${jam} jam`}
                     </div>
                 `;
-                
-                dayElement.addEventListener('click', () => openModal(day, value));
+
+                dayElement.addEventListener('click', () => openModal(day, jam));
                 container.appendChild(dayElement);
             });
-            
+
             updateStatistics();
         }
-        
+
         // Buka modal
-        function openModal(day, value) {
+        function openModal(day, jam) {
             currentDay = day - 1;
             document.getElementById('modalDay').textContent = day;
-            document.getElementById('paymentSlider').value = value;
-            document.getElementById('sliderValue').textContent = value;
-            
+            document.getElementById('jamSlider').value = jam;
+            document.getElementById('selectedValue').textContent = jam;
+
             // Update indikator aktif
-            updateSliderIndicator(value);
-            
+            updateJamIndicator(jam);
+
             document.getElementById('modal').classList.remove('hidden');
             setTimeout(() => {
                 document.getElementById('modal').classList.add('flex');
@@ -401,199 +674,345 @@
                 document.querySelector('#modal > div').classList.add('scale-100');
             }, 10);
         }
-        
+
         // Tutup modal
         function closeModal() {
             document.querySelector('#modal > div').classList.remove('scale-100');
             document.querySelector('#modal > div').classList.add('scale-95');
-            
+
             setTimeout(() => {
                 document.getElementById('modal').classList.remove('flex');
                 document.getElementById('modal').classList.add('hidden');
             }, 300);
         }
-        
-        // Update indikator slider
-        function updateSliderIndicator(value) {
+
+        // Update indikator jam
+        function updateJamIndicator(jam) {
             // Reset semua indikator
             document.querySelectorAll('[id^="indicator"]').forEach(el => {
                 el.classList.remove('ring-2', 'ring-offset-1');
                 el.classList.remove('ring-blue-500');
             });
-            
+
             // Set indikator aktif
-            if (value === 0) {
+            if (jam === 0) {
                 document.getElementById('indicator0').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
-            } else if (value >= 1 && value <= 50) {
+            } else if (jam >= 1 && jam <= 3) {
                 document.getElementById('indicator1').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
-            } else if (value >= 51 && value <= 70) {
+            } else if (jam >= 4 && jam <= 5) {
                 document.getElementById('indicator2').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
-            } else if (value >= 71 && value <= 80) {
+            } else if (jam >= 6 && jam <= 8) {
                 document.getElementById('indicator3').classList.add('ring-2', 'ring-offset-1', 'ring-blue-500');
             }
-            
-            // Update warna slider berdasarkan nilai
-            const slider = document.getElementById('paymentSlider');
-            slider.classList.remove('slider-green', 'slider-orange', 'slider-yellow');
-            
-            if (value >= 71) {
-                slider.classList.add('slider-green');
-            } else if (value >= 51) {
-                slider.classList.add('slider-orange');
-            } else if (value >= 1) {
-                slider.classList.add('slider-yellow');
-            }
         }
-        
+
         // Simpan perubahan
         function saveChanges() {
-            const value = parseInt(document.getElementById('paymentSlider').value);
-            daysData[currentDay] = value;
-            
+            const jamValue = parseInt(document.getElementById('jamSlider').value);
+            daysData[currentDay] = jamValue;
+
             renderGrid();
             saveToIndexedDB();
             closeModal();
-            
+
             // Tampilkan notifikasi
-            showToast('Data hari ' + (currentDay + 1) + ' disimpan dengan nilai ' + value);
+            showToast(
+                `Hari ${currentDay + 1} disimpan`,
+                `Jam: ${jamValue} (${getKategoriText(jamValue)})`
+            );
         }
-        
+
+        // Get kategori text
+        function getKategoriText(jam) {
+            if (jam === 0) return "Belum dibayar";
+            if (jam >= 1 && jam <= 3) return "Pembayaran awal";
+            if (jam >= 4 && jam <= 5) return "Pembayaran sedang";
+            if (jam >= 6 && jam <= 8) return "Lunas";
+            return "";
+        }
+
         // Tampilkan toast
-        function showToast(message) {
+        function showToast(title, message) {
             const toast = document.getElementById('toast');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message;
+
             toast.classList.remove('hidden', 'translate-y-full');
-            
+
             setTimeout(() => {
                 toast.classList.add('translate-y-full');
                 setTimeout(() => toast.classList.add('hidden'), 300);
             }, 3000);
         }
-        
+
         // IndexedDB Functions
         function initIndexedDB() {
-            const request = indexedDB.open('UtangWaktuKerjaDB', 1);
-            
-            request.onerror = function(event) {
+            const request = indexedDB.open('UtangWaktuKerjaPWA', 2);
+
+            request.onerror = function (event) {
                 console.log('Error membuka database:', event.target.error);
             };
-            
-            request.onupgradeneeded = function(event) {
+
+            request.onupgradeneeded = function (event) {
                 db = event.target.result;
-                const objectStore = db.createObjectStore('data', { keyPath: 'id' });
-                objectStore.createIndex('days', 'days', { unique: false });
-                objectStore.createIndex('total', 'total', { unique: false });
+                if (!db.objectStoreNames.contains('data')) {
+                    const objectStore = db.createObjectStore('data', { keyPath: 'id' });
+                    objectStore.createIndex('days', 'days', { unique: false });
+                    objectStore.createIndex('total', 'total', { unique: false });
+                    objectStore.createIndex('jamPerHari', 'jamPerHari', { unique: false });
+                }
             };
-            
-            request.onsuccess = function(event) {
+
+            request.onsuccess = function (event) {
                 db = event.target.result;
                 loadFromIndexedDB();
             };
         }
-        
+
         function saveToIndexedDB() {
             if (!db) return;
-            
+
             const transaction = db.transaction(['data'], 'readwrite');
             const objectStore = transaction.objectStore('data');
-            
+
             const data = {
                 id: 'utangData',
                 days: daysData,
-                total: parseInt(document.getElementById('totalHutang').value) || totalHutang
+                total: totalHutang,
+                jamPerHari: jamPerHari
             };
-            
+
             const request = objectStore.put(data);
-            
-            request.onerror = function(event) {
+
+            request.onerror = function (event) {
                 console.log('Error menyimpan data:', event.target.error);
             };
         }
-        
+
         function loadFromIndexedDB() {
             if (!db) return;
-            
+
             const transaction = db.transaction(['data'], 'readonly');
             const objectStore = transaction.objectStore('data');
             const request = objectStore.get('utangData');
-            
-            request.onsuccess = function(event) {
+
+            request.onsuccess = function (event) {
                 const data = event.target.result;
                 if (data) {
-                    daysData = data.days;
-                    totalHutang = data.total;
+                    daysData = data.days || Array(30).fill(0);
+                    totalHutang = data.total || 240;
+                    jamPerHari = data.jamPerHari || 8;
+
                     document.getElementById('totalHutang').value = totalHutang;
-                    renderGrid();
+                    document.getElementById('jamPerHari').textContent = jamPerHari;
+
+                    updateHitungHari();
                 }
             };
-            
-            request.onerror = function(event) {
+
+            request.onerror = function (event) {
                 console.log('Error memuat data:', event.target.error);
             };
         }
-        
+
         // Reset semua data
         function resetData() {
             if (confirm('Apakah Anda yakin ingin mereset semua data? Tindakan ini tidak dapat dibatalkan.')) {
-                daysData = Array(30).fill(0);
-                document.getElementById('totalHutang').value = 240;
-                totalHutang = 240;
-                
+                daysData = Array(daysData.length).fill(0);
+
                 renderGrid();
                 saveToIndexedDB();
-                
-                showToast('Semua data telah direset');
+
+                showToast('Data direset', 'Semua data telah dikembalikan ke nilai awal');
             }
         }
-        
+
+        // Ekspor data
+        function eksporData() {
+            const data = {
+                totalHutang: totalHutang,
+                jamPerHari: jamPerHari,
+                hari: daysData.length,
+                data: daysData,
+                tanggalEkspor: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `utang-waktu-kerja-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('Data di-ekspor', 'File JSON berhasil didownload');
+        }
+
+        // PWA Functions
+        function initPWA() {
+            // Tangkap beforeinstallprompt event
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+
+                // Tampilkan tombol install
+                document.getElementById('pwaInstallBtn').classList.remove('hidden');
+
+                // Tampilkan prompt install setelah 5 detik
+                setTimeout(() => {
+                    const hasSeenPrompt = localStorage.getItem('hasSeenInstallPrompt');
+                    if (!hasSeenPrompt) {
+                        document.getElementById('installPrompt').classList.remove('hidden');
+                    }
+                }, 5000);
+            });
+
+            // Deteksi jika app sudah diinstall
+            window.addEventListener('appinstalled', () => {
+                console.log('PWA installed');
+                document.getElementById('pwaInstallBtn').classList.add('hidden');
+                document.getElementById('installPrompt').classList.add('hidden');
+                showToast('Aplikasi Terinstall', 'Aplikasi berhasil diinstall!');
+            });
+
+            // Deteksi status online/offline
+            window.addEventListener('online', () => {
+                document.getElementById('onlineStatus').classList.remove('hidden');
+                document.getElementById('offlineStatus').classList.add('hidden');
+            });
+
+            window.addEventListener('offline', () => {
+                document.getElementById('offlineStatus').classList.remove('hidden');
+                document.getElementById('onlineStatus').classList.add('hidden');
+            });
+
+            // Set initial status
+            if (navigator.onLine) {
+                document.getElementById('onlineStatus').classList.remove('hidden');
+            } else {
+                document.getElementById('offlineStatus').classList.remove('hidden');
+            }
+        }
+
+        // Install PWA
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted install');
+                    } else {
+                        console.log('User dismissed install');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+
+            // Sembunyikan prompt
+            document.getElementById('installPrompt').classList.add('hidden');
+            localStorage.setItem('hasSeenInstallPrompt', 'true');
+        }
+
         // Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Render grid awal
-            renderGrid();
-            
+            updateHitungHari();
+
             // Inisialisasi IndexedDB
             initIndexedDB();
-            
+
+            // Inisialisasi PWA
+            initPWA();
+
             // Slider event
-            document.getElementById('paymentSlider').addEventListener('input', function() {
+            document.getElementById('jamSlider').addEventListener('input', function () {
                 const value = this.value;
-                document.getElementById('sliderValue').textContent = value;
-                updateSliderIndicator(parseInt(value));
+                document.getElementById('selectedValue').textContent = value;
+                updateJamIndicator(parseInt(value));
             });
-            
+
+            // Tombol jam cepat
+            document.querySelectorAll('.jam-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const jam = this.getAttribute('data-jam');
+                    document.getElementById('jamSlider').value = jam;
+                    document.getElementById('selectedValue').textContent = jam;
+                    updateJamIndicator(parseInt(jam));
+                });
+            });
+
             // Modal buttons
             document.getElementById('closeModal').addEventListener('click', closeModal);
             document.getElementById('btnCancel').addEventListener('click', closeModal);
             document.getElementById('btnSaveModal').addEventListener('click', saveChanges);
-            
+
             // Tombol aksi
             document.getElementById('btnReset').addEventListener('click', resetData);
-            document.getElementById('btnSimpan').addEventListener('click', function() {
+            document.getElementById('btnSimpan').addEventListener('click', function () {
                 saveToIndexedDB();
-                showToast('Semua data berhasil disimpan ke database');
+                showToast('Data disimpan', 'Semua data berhasil disimpan ke database');
             });
-            
+
+            document.getElementById('btnEkspor').addEventListener('click', eksporData);
+
             // Input total hutang
-            document.getElementById('totalHutang').addEventListener('change', function() {
+            document.getElementById('totalHutang').addEventListener('change', function () {
                 totalHutang = parseInt(this.value) || 240;
-                updateStatistics();
+                updateHitungHari();
                 saveToIndexedDB();
             });
-            
+
+            // Tombol jam per hari
+            document.getElementById('btnMinusJam').addEventListener('click', function () {
+                let current = parseInt(document.getElementById('jamPerHari').textContent);
+                if (current > 1) {
+                    document.getElementById('jamPerHari').textContent = current - 1;
+                    updateHitungHari();
+                    saveToIndexedDB();
+                }
+            });
+
+            document.getElementById('btnPlusJam').addEventListener('click', function () {
+                let current = parseInt(document.getElementById('jamPerHari').textContent);
+                if (current < 12) {
+                    document.getElementById('jamPerHari').textContent = current + 1;
+                    updateHitungHari();
+                    saveToIndexedDB();
+                }
+            });
+
+            // PWA Install buttons
+            document.getElementById('installApp').addEventListener('click', installPWA);
+            document.getElementById('installCancel').addEventListener('click', function () {
+                document.getElementById('installPrompt').classList.add('hidden');
+                localStorage.setItem('hasSeenInstallPrompt', 'true');
+            });
+
+            document.getElementById('closeInstall').addEventListener('click', function () {
+                document.getElementById('installPrompt').classList.add('hidden');
+                localStorage.setItem('hasSeenInstallPrompt', 'true');
+            });
+
+            document.getElementById('pwaInstallBtn').addEventListener('click', installPWA);
+
             // Tutup modal dengan ESC
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && !document.getElementById('modal').classList.contains('hidden')) {
                     closeModal();
                 }
             });
-            
+
             // Tutup modal dengan klik di luar
-            document.getElementById('modal').addEventListener('click', function(e) {
+            document.getElementById('modal').addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeModal();
                 }
             });
-            
-            // Tambahkan animasi pada grid item saat pertama kali dimuat
+
+            // Animasi awal
             setTimeout(() => {
                 const gridItems = document.querySelectorAll('#gridContainer > div');
                 gridItems.forEach((item, index) => {
@@ -607,5 +1026,19 @@
             }, 500);
         });
     </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').then(registration => {
+                    console.log('ServiceWorker registered: ', registration);
+                }).catch(registrationError => {
+                    console.log('ServiceWorker registration failed: ', registrationError);
+                });
+            });
+        }
+    </script>
 </body>
+
 </html>
